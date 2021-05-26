@@ -1,0 +1,166 @@
+---
+title: Data Science Assignment
+author: "Jorge Portugal"
+date: "May 25, 2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+data <- read.csv("C:/Users/J/Desktop/New folder/data.csv.csv")
+```
+
+
+##Initial Thoughts
+```{r}
+data <- read.csv("C:/Users/J/Desktop/New folder/data.csv.csv")
+
+#The following code is  just me brainstorming ideas as to how to approach the problem 
+
+colnames(data) 
+unique(data$Fiscal.Year) 
+
+dat<-subset(data, Fiscal.Year==2017) 
+#I initially thought question wanted only the latest year's data to make decisions for the next year.
+#At this point, I didn't realize the Profit values were the same across every year 
+unique(dat$Item.Type)
+unique(dat$Profit.as...of.Cost)
+
+#I looked at the values of Item Type and Profit, and noticed there were only 12 different profit values.
+#It was straightforward from there, I then found the minimum profit value along with its 
+#corresponding item type, and that is the least profitable Item Type
+mins<-min(dat[,"Profit.as...of.Cost"])
+mins2<-dat[dat$Profit.as...of.Cost == mins, "Item.Type"]
+mins2[1]
+
+#Did the same for the max, which results in the discovery of the most profitable item type
+max<-max(dat[,"Profit.as...of.Cost"])
+max2<-dat[dat$Profit.as...of.Cost == max, "Item.Type"]
+max2[1]
+
+```
+
+
+##Problem 1
+
+After this brainstorimg session, I came up with:
+
+The following function, which takes in a dataset and a year as parameters , and returns a table containing each Item with its corresponding Average Profit value in descending order.
+
+
+
+```{r}
+myfunc<-function(data,year){
+  sub<-subset(data, Fiscal.Year==year)
+  Avg.Profit<-c(mean(sub$Profit.as...of.Cost[sub$Item.Type=="Beverages"]),
+                mean(sub$Profit.as...of.Cost[sub$Item.Type=="Office Supplies"]),
+                mean(sub$Profit.as...of.Cost[sub$Item.Type=="Vegetables"]),
+                mean(sub$Profit.as...of.Cost[sub$Item.Type=="Fruits"]),
+                mean(sub$Profit.as...of.Cost[sub$Item.Type=="Cosmetics"]),
+                mean(sub$Profit.as...of.Cost[sub$Item.Type=="Cereal"]),
+                mean(sub$Profit.as...of.Cost[sub$Item.Type=="Meat"]),
+                mean(sub$Profit.as...of.Cost[sub$Item.Type=="Personal Care"]),
+                mean(sub$Profit.as...of.Cost[sub$Item.Type=="Baby Food"]),
+                mean(sub$Profit.as...of.Cost[sub$Item.Type=="Snacks"]),
+                mean(sub$Profit.as...of.Cost[sub$Item.Type=="Household"]),
+                mean(sub$Profit.as...of.Cost[sub$Item.Type=="Clothes"]))
+  Avg.Profit<-round(Avg.Profit,5)
+  Item.Type<-unique(sub$Item.Type)
+  
+  dat<-data.frame(Item.Type,Avg.Profit)
+  dat<-dat[order(-Avg.Profit),]
+  return(dat)
+  }
+
+myfunc(data, 2017)
+
+```
+Results indicated Clothes and Cereal are the most profitable and should be sold more, while Office Supplies and Meat were the least profitable and should be dropped.
+
+This function is flexible and builds upon my initial work. It can check for profitability per year (there were few unique values per Year in this specific dataset), as well as calculate the Average Profit Value per item. (were were also few unique Profit values)
+
+
+```{r}
+
+myfunc2<-function(data,year){
+  sub<-subset(data, Fiscal.Year==year)
+  Avg.Profit<-c(mean(sub$Profit.as...of.Cost[sub$Region=="Asia"]),
+                mean(sub$Profit.as...of.Cost[sub$Region=="Europe"]),
+                mean(sub$Profit.as...of.Cost[sub$Region=="Sub-Saharan Africa"]),
+                mean(sub$Profit.as...of.Cost[sub$Region=="North America"]),
+                mean(sub$Profit.as...of.Cost[sub$Region=="Middle East and North Africa"]),
+                mean(sub$Profit.as...of.Cost[sub$Region=="Central America and the Caribbean"]),
+                mean(sub$Profit.as...of.Cost[sub$Region=="Australia and Oceania"]))
+  Avg.Profit<-round(Avg.Profit,5)
+  Region<-unique(sub$Region)
+  
+  dat<-cbind(Region,Avg.Profit)
+  dat<-dat[order(-Avg.Profit),]
+  return(dat)
+}
+
+myfunc2(data, 2017)
+
+```
+
+Similar approach to Item Type profitability. 
+
+The results indicate North America and Sub-Saharan Africa should be given preference over the other Regions, as they have the highest average profit. 
+
+##Problem 2
+
+The way I approached this question is to create a function that would calculate the number of days between Order Date and Ship Date for every item (called Diff), obtain the mean Diff per item, and return a list containing each item type with its corresponding Diff in ascending order.  
+
+```{r}
+Asia<-subset(data, Region=="Asia")
+Europe<-subset(data, Region=="Europe")
+Sub.Saharan.Africa<-subset(data, Region=="Sub-Saharan Africa")
+North.America<-subset(data, Region=="North America")
+MiddleEast.NorthAfrica<-subset(data, Region=="Middle East and North Africa")
+CentralAmerica.Caribbean<-subset(data, Region=="Central America and the Caribbean")
+Australia.Oceania<-subset(data, Region=="Australia and Oceania")
+
+
+myfunc4<-function(sub){
+  sub$Order.Date<-as.Date(sub$Order.Date,format = "%m/%d/%y")
+  sub$Ship.Date<-as.Date(sub$Ship.Date,format = "%m/%d/%y")
+  sub$Diff<-difftime(sub$Ship.Date,sub$Order.Date, units="days")
+  
+  Time<-c(mean(sub$Diff[sub$Item.Type=="Beverages"]),
+                mean(sub$Diff[sub$Item.Type=="Office Supplies"]),
+                mean(sub$Diff[sub$Item.Type=="Vegetables"]),
+                mean(sub$Diff[sub$Item.Type=="Fruits"]),
+                mean(sub$Diff[sub$Item.Type=="Cosmetics"]),
+                mean(sub$Diff[sub$Item.Type=="Cereal"]),
+                mean(sub$Diff[sub$Item.Type=="Meat"]),
+                mean(sub$Diff[sub$Item.Type=="Personal Care"]),
+                mean(sub$Diff[sub$Item.Type=="Baby Food"]),
+                mean(sub$Diff[sub$Item.Type=="Snacks"]),
+                mean(sub$Diff[sub$Item.Type=="Household"]),
+                mean(sub$Diff[sub$Item.Type=="Clothes"]))
+  Time<-round(Time,2)
+  df<-data.frame(Item.Type=unique(sub$Item.Type),Time=Time)
+  df<-df[order(Time),]
+  return(df)
+}
+
+
+myfunc4(Asia)
+myfunc4(Europe)
+myfunc4(Sub.Saharan.Africa)
+myfunc4(North.America)
+myfunc4(MiddleEast.NorthAfrica)
+myfunc4(CentralAmerica.Caribbean)
+myfunc4(Australia.Oceania)
+```
+
+This function has been run 7 times, once for each Region. The items at the top are the easiest to sell, while those at the bottom take the longest to sell.
+
+```{r}
+#sub<-data
+#for(i in unique(dat$Region)){
+#    nxt[i]<-mean(dat$Profit.as...of.Cost[dat$Region==i])
+#  }
+#nxt
+```
